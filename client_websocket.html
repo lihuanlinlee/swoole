@@ -1,0 +1,85 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Swoole简易聊天室</title>
+    <script src="vue.js" type="text/javascript"></script>
+</head>
+<body>
+    <div id="main">
+    <div id="list">{{linkMessage}}</div><br/>
+    <ul>
+    <li v-for="item in items">
+      {{ item }}
+    </li>
+   </ul>
+   <textarea id="content" ></textarea><br /><br />
+   <button id='ToggleConnection' type="button" v-on:click="connectServer">连接服务器</button>
+   <button id='ToggleConnection' type="button" v-on:click="closeServer">关闭服务器</button>
+   <button id='ToggleConnection' type="button" v-on:click="SendData">发送信息</button>
+   <button id='ToggleConnection' type="button" v-on:click="seestate">查看状态</button>
+   </div>
+    <script>
+        var ws;
+        var app = new Vue({
+          el: '#main',
+          data: {
+            linkMessage: '',
+            items: []
+          },
+          methods:{
+              connectServer:function ()
+              {
+                    _this = this;
+                    try {
+                        if (typeof(WebSocket) == 'undefined')
+                        {
+                            alert("浏览器不支持WebSocket");
+                            return false;
+                        }
+                        ws = new WebSocket("ws://121.12.104.214:9501");//连接服务器        
+                        ws.onopen = function(event){
+                            _this.linkMessage = "已经与服务器建立了连接";
+                        };
+                        ws.onmessage = function(event){
+                            _this.items.push(event.data);
+                        };
+                        ws.onclose = function(event){alert("已经与服务器断开连接\r\n当前连接状态："+this.readyState);};
+                        ws.onerror = function(event){alert("WebSocket服务器异常！");};
+                    } catch (ex) {
+                        alert(ex.message);      
+                    }
+              },
+              closeServer:function ()
+              {
+                   ws.close();
+              },
+               SendData:function () 
+                {
+                    try{
+                        var content = document.getElementById("content").value;
+                        if(content){
+                            ws.send('{"method":"'+ content +'"}');
+                        }
+
+                    }catch(ex){
+                        alert(ex.message);
+                    }
+                },
+                seestate: function()
+               {
+                    if(ws.readyState == 0)
+                    {
+                        alert("表示连接尚未建立");
+                    }else if(ws.readyState == 1){
+                        alert("表示连接已建立，可以进行通信");
+                    }else if(ws.readyState == 2){
+                        alert("表示连接正在进行关闭");
+                    }else if(ws.readyState == 3){
+                        alert("表示连接已经关闭或者连接不能打开");
+                    }
+               }
+          }
+        })
+    </script>
+</body>
+</html>
